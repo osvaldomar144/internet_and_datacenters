@@ -11,8 +11,7 @@ PATH_FRR_RIP="../../../../frr/rip/frr.conf"
 PATH_FRR_OSPF="../../../../frr/ospf/frr.conf"
 PATH_VTYSH_CONF="../../../../frr/vtysh.conf"
 LINE_OSPF_COST=8
-prefix_protocol="0.0.0.0"
-area="0.0.0.0"
+LINE_OSPF_AREAS=11
 
 read -p '=> Folder Name: ' name_folder
 mkdir $name_folder && cd $name_folder
@@ -33,8 +32,7 @@ then
 elif [ $protocol == 'ospf' ] 
 then
     echo "\n=> [OK] Selected OSPF option"
-    read -p '=> Insert network prefix for frr.conf: ' prefix_protocol
-    read -p '=> Insert area for frr.conf: ' area
+    read -p '   multi-area? (y, n): ' multiarea
     PATH_DAEMON=$PATH_DAEMON_OSPF
     PATH_FRR=$PATH_FRR_OSPF
 else 
@@ -80,21 +78,59 @@ do
         cp $PATH_DAEMON daemons && cp $PATH_VTYSH_CONF vtysh.conf && cp $PATH_FRR frr.conf
         if [ $protocol == 'ospf' ] 
         then
-            read -p " => Interface costs for device ${device}: " -a costs
-            index=0
-            line=$LINE_OSPF_COST
-            for cost in ${costs[@]}
-            do
-                command="\ninterface eth${index}\nospf cost ${cost}"
-                sed -i -e "${line}s/$/ ${command}/" frr.conf
-                line=$((line+2))
-                index=$((index+1))
-            done
-            sed -i -e "s/TO_FIX_AREA/${area}/" frr.conf && rm frr.conf-e
+            read -p ' => Exclude cost for device ${device}? (y, n): ' exclude_cost
+            if [ $exclude_cost == 'n' ]
+            then
+                read -p " => Interface costs for device ${device}: " -a costs
+                index=0
+                line=$LINE_OSPF_COST
+                for cost in ${costs[@]}
+                do
+                    command="\ninterface eth${index}\nospf cost ${cost}"
+                    sed -i -e "${line}s/$/ ${command}/" frr.conf
+                    line=$((line+2))
+                    index=$((index+1))
+                done
+                line=$((LINE_OSPF_AREAS+(line-LINE_OSPF_COST)))
+            else
+                line=$LINE_OSPF_AREAS
+            fi
+            if [ $multiarea == 'y' ]
+            then
+                read -p ' => Insert prefix for BACKBONE area: ' backbone
+                read -p ' => Insert area for BACKBONE: ' area_backbone
+                command="network ${backbone} area ${area_backbone}"
+                i=$(echo "$command" | awk -F"/" '{print length($1) + 1}')
+                command_modified="\n${command:0:i-1}\\${command:i-1}"
+                sed -i -e "${line}s/$/ ${command_modified}/" frr.conf && rm frr.conf-e
+                line=$((line+1))
+                read -p " => Insert stub prefixes: " -a stubs
+                read -p " => Insert stub areas: " -a areas_stub
+                k=0
+                for stub in ${stubs[@]}
+                do
+                    command="network ${stub} area ${areas_stub[k]}"
+                    i=$(echo "$command" | awk -F"/" '{print length($1) + 1}')
+                    command_modified="\n${command:0:i[0]-1}\\${command:i[0]-1}\narea ${areas_stub[k]} stub"
+                    sed -i -e "${line}s/$/ ${command_modified}/" frr.conf && rm frr.conf-e
+                    line=$((line+2))
+                    k=$((k+1))
+                done
+            else
+                read -p ' => Insert network prefix for frr.conf: ' prefix_single_area
+                read -p ' => Insert area for frr.conf: ' single_area
+                command="network ${prefix_single_area} area ${single_area}"
+                i=$(echo "$command" | awk -F"/" '{print length($1) + 1}')
+                command_modified="\n${command:0:i-1}\\${command:i-1}"
+                sed -i -e "${line}s/$/ ${command_modified}/" frr.conf && rm frr.conf-e
+            fi
         fi
-        char_index=$(echo "$prefix_protocol" | awk -F"/" '{print length($1) + 1}')
-        prefix_modified="${prefix_protocol:0:char_index-1}\\${prefix_protocol:char_index-1}/"
-        sed -i -e "s/TO_FIX_PREFIX/${prefix_modified}" frr.conf && rm frr.conf-e
+        if [ $protocol == 'rip' ]
+        then
+            char_index=$(echo "$prefix_protocol" | awk -F"/" '{print length($1) + 1}')
+            prefix_modified="${prefix_protocol:0:char_index-1}\\${prefix_protocol:char_index-1}/"
+            sed -i -e "s/TO_FIX_PREFIX/${prefix_modified}" frr.conf && rm frr.conf-e
+        fi
         cd ../../../
     fi
     echo "\n_________ End insert for ${device}: _________"
