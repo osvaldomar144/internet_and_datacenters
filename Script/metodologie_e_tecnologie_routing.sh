@@ -78,7 +78,7 @@ do
         cp $PATH_DAEMON daemons && cp $PATH_VTYSH_CONF vtysh.conf && cp $PATH_FRR frr.conf
         if [ $protocol == 'ospf' ] 
         then
-            read -p ' => Exclude cost for device ${device}? (y, n): ' exclude_cost
+            read -p ' => Exclude cost for this device? (y, n): ' exclude_cost
             if [ $exclude_cost == 'n' ]
             then
                 read -p " => Interface costs for device ${device}: " -a costs
