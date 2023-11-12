@@ -92,8 +92,7 @@ do
             done
             sed -i -e "s/TO_FIX_AREA/${area}/" frr.conf && rm frr.conf-e
         fi
-        carattere_prima="/"
-        char_index=$(echo "$prefix_protocol" | awk -F"${carattere_prima}" '{print length($1) + 1}')
+        char_index=$(echo "$prefix_protocol" | awk -F"/" '{print length($1) + 1}')
         prefix_modified="${prefix_protocol:0:char_index-1}\\${prefix_protocol:char_index-1}/"
         sed -i -e "s/TO_FIX_PREFIX/${prefix_modified}" frr.conf && rm frr.conf-e
         cd ../../../
