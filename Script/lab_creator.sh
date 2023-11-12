@@ -86,7 +86,7 @@ do
                 line=$LINE_OSPF_COST
                 for cost in ${costs[@]}
                 do
-                    if ! [ $cost == '0' ]
+                    if ! [ $cost == 0 ]
                     then
                         command="\ninterface eth${index}\nospf cost ${cost}"
                         sed -i -e "${line}s/$/ ${command}/" frr.conf
