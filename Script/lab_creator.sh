@@ -86,9 +86,12 @@ do
                 line=$LINE_OSPF_COST
                 for cost in ${costs[@]}
                 do
-                    command="\ninterface eth${index}\nospf cost ${cost}"
-                    sed -i -e "${line}s/$/ ${command}/" frr.conf
-                    line=$((line+2))
+                    if ! [ $cost == '0' ]
+                    then
+                        command="\ninterface eth${index}\nospf cost ${cost}"
+                        sed -i -e "${line}s/$/ ${command}/" frr.conf
+                        line=$((line+2))
+                    fi
                     index=$((index+1))
                 done
                 line=$((LINE_OSPF_AREAS+(line-LINE_OSPF_COST)))
