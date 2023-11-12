@@ -97,25 +97,43 @@ do
             fi
             if [ $multiarea == 'y' ]
             then
-                read -p ' => Insert prefix for BACKBONE area: ' backbone
-                read -p ' => Insert area for BACKBONE: ' area_backbone
-                command="network ${backbone} area ${area_backbone}"
-                i=$(echo "$command" | awk -F"/" '{print length($1) + 1}')
-                command_modified="\n${command:0:i-1}\\${command:i-1}"
-                sed -i -e "${line}s/$/ ${command_modified}/" frr.conf && rm frr.conf-e
-                line=$((line+1))
-                read -p " => Insert stub prefixes: " -a stubs
-                read -p " => Insert stub areas: " -a areas_stub
-                k=0
-                for stub in ${stubs[@]}
-                do
-                    command="network ${stub} area ${areas_stub[k]}"
+                read -p " => Device is in backbone area? (y, n): " backbone_device
+                if [ $backbone_device == 'y' ] 
+                then
+                    read -p ' => Insert prefix for BACKBONE area: ' backbone
+                    read -p ' => Insert area for BACKBONE: ' area_backbone
+                    command="network ${backbone} area ${area_backbone}"
                     i=$(echo "$command" | awk -F"/" '{print length($1) + 1}')
-                    command_modified="\n${command:0:i[0]-1}\\${command:i[0]-1}\narea ${areas_stub[k]} stub"
+                    command_modified="\n${command:0:i-1}\\${command:i-1}"
                     sed -i -e "${line}s/$/ ${command_modified}/" frr.conf && rm frr.conf-e
-                    line=$((line+2))
-                    k=$((k+1))
-                done
+                    line=$((line+1))
+                fi
+                read -p " => Insert stub info? (y, n): " stub_info
+                if [ $stub_info == 'y' ] 
+                then
+                    read -p " => Insert stub prefixes: " -a stubs
+                    read -p " => Insert stub areas: " -a areas_stub
+                    areas_to_write=()
+                    k=0
+                    for stub in ${stubs[@]}
+                    do
+                        command="network ${stub} area ${areas_stub[k]}"
+                        i=$(echo "$command" | awk -F"/" '{print length($1) + 1}')
+                        command_modified="\n${command:0:i[0]-1}\\${command:i[0]-1}"
+                        sed -i -e "${line}s/$/ ${command_modified}/" frr.conf && rm frr.conf-e
+                        line=$((line+1))
+                        if ! [[ " ${areas_to_write[@]} " =~ " ${areas_stub[k]} " ]]; then
+                            areas_to_write+=(${areas_stub[k]})
+                        fi
+                        k=$((k+1))
+                    done
+                    for area in ${areas_to_write[@]}
+                    do
+                        command="\narea ${area} stub"
+                        sed -i -e "${line}s/$/ ${command}/" frr.conf && rm frr.conf-e
+                        line=$((line+1))
+                    done
+                fi
             else
                 read -p ' => Insert network prefix for frr.conf: ' prefix_single_area
                 read -p ' => Insert area for frr.conf: ' single_area
