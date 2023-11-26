@@ -1,4 +1,0 @@
-/sbin/ifconfig eth0 5.0.0.2/24 up
-
-
-route add default gw 5.0.0.5
