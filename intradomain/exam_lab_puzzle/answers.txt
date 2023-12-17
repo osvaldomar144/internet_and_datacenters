@@ -1,8 +1,0 @@
-a. Which is the router-id of router b02?
-   OSPF Router with ID (100.20.2.21)
-
-b. Which is the designated router of LAN E?
-   Designated Router (ID) 100.20.2.21 - Router b02 is the designated router
-
-c. Which routers have some 0/0 (default route) entries in the zebra routing table?
-   all routers not in backbone area (r11, r12, r21, r31)

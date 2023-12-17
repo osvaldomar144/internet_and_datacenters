@@ -1,8 +1,0 @@
-a. Which is the router-id of router b012?
-   OSPF Router with ID (100.20.1.20)
-
-b. Which is the designated router of LAN G?
-   Designated Router (ID) 100.30.1.30 - Router b03
-
-c. How many 0/0 (default route) entries can be found in the zebra routing table of router r21?
-   O>* 0.0.0.0/0 [110/11] via 100.20.1.20, eth0, weight 1, 00:20:31
